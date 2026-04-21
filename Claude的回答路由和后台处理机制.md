@@ -53,6 +53,7 @@ GPT 说的这个 6 层框架其实挺准的，基本对齐了业界公开的工�
 
 第五层工具循环，这里有个关键细节：**工具调用结果会作为新的 context 追加进去，模型重新 attend 整个上下文**，所以多轮工具调用的成本是 O(n²) 级别增长的，这也是为什么 token 成本控制是 agentic 产品的核心工程问题。
 
+<img width="1440" height="1720" alt="image" src="https://github.com/user-attachments/assets/a32bc104-1fc4-4400-90d5-66a49c197e58" />
 
 
 图里每个节点都可以点击，会进一步追问相关细节。
