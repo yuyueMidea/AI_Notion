@@ -1,3 +1,6 @@
+<img width="1440" height="1040" alt="image" src="https://github.com/user-attachments/assets/c016afc4-be5e-4ed1-98b9-2bad7b59f57d" />
+
+
 上面是整体流程的鸟瞰图，点击任意节点可以继续深入追问。下面逐层拆解每个阶段的原理。
 
 ---
