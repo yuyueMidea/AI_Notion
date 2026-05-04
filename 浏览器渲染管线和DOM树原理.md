@@ -1,7 +1,7 @@
 <img width="1440" height="1040" alt="image" src="https://github.com/user-attachments/assets/c016afc4-be5e-4ed1-98b9-2bad7b59f57d" />
 
 
-上面是整体流程的鸟瞰图，点击任意节点可以继续深入追问。下面逐层拆解每个阶段的原理。
+上面是整体流程的鸟瞰图。下面逐层拆解每个阶段的原理。
 
 ---
 
@@ -62,5 +62,3 @@ Render Tree 的每个节点叫做 **RenderObject**（在 Chromium 里叫 `Layout
 **Reflow vs Repaint 的区别**：Reflow（回流）是 Layout 阶段重新计算，它一定会触发后续的 Paint 和 Composite，代价最高。Repaint（重绘）跳过 Layout，只重新 Paint，代价中等。只修改 `transform`/`opacity` 则只触发 Composite，代价最低，这是 CSS 动画性能优化的核心原则。
 
 **为何 JS 放 `<body>` 末尾**：JS 执行会阻塞 HTML 解析（因为 JS 可能操作 DOM），所以脚本放末尾能让页面先解析完 HTML 构建 DOM，再运行脚本，用户更快看到内容。`defer`/`async` 属性是更现代的解法。
-
-如果你想深入某个具体环节——比如 CSS 层叠算法、合成层的触发条件、或者 V8 引擎如何解析 JS 产生 AST——可以继续问。
