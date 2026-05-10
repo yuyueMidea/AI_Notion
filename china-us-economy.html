@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中美经济体制的差异</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #C0392B;
+    --deep-red: #7B1F1A;
+    --blue: #1A3A5C;
+    --deep-blue: #0D2137;
+    --gold: #C9A84C;
+    --ivory: #F8F4EC;
+    --ink: #1C1C1C;
+    --muted: #5A5A5A;
+    --border: #D4C9B0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--ivory);
+    color: var(--ink);
+    font-family: 'Noto Serif SC', serif;
+    font-size: 17px;
+    line-height: 1.9;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  header {
+    position: relative;
+    background: linear-gradient(135deg, var(--deep-red) 0%, #3B0D0A 50%, var(--deep-blue) 100%);
+    padding: 80px 40px 70px;
+    text-align: center;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(255,255,255,0.025) 40px,
+      rgba(255,255,255,0.025) 80px
+    );
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--gold), var(--blue));
+  }
+
+  .flag-strip {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
+  }
+  .flag-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.75);
+    text-transform: uppercase;
+  }
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .dot-cn { background: #DE2910; box-shadow: 0 0 8px #DE2910; }
+  .dot-us { background: #3C3B6E; box-shadow: 0 0 8px #3C3B6E; }
+  .divider-flag {
+    color: rgba(255,255,255,0.2);
+    font-size: 18px;
+  }
+
+  header h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.06em;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+  }
+  header h1 em {
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+  }
+  .header-sub {
+    margin-top: 16px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 32px 100px;
+  }
+
+  /* ── INTRO CARD ── */
+  .intro-card {
+    border-left: 4px solid var(--gold);
+    background: rgba(201,168,76,0.07);
+    padding: 28px 32px;
+    margin-bottom: 60px;
+    font-size: 16.5px;
+    color: #3A3020;
+    line-height: 2;
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 64px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .section-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--border);
+    flex-shrink: 0;
+    margin-top: -4px;
+  }
+  .section-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 10px;
+    flex: 1;
+    margin-top: 8px;
+  }
+  .section-title span {
+    color: var(--red);
+  }
+
+  p {
+    margin-bottom: 18px;
+    color: #2A2A2A;
+    text-align: justify;
+    text-justify: inter-character;
+  }
+
+  /* ── COMPARE TABLE ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 28px 0;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+  }
+  .compare-table th {
+    padding: 12px 16px;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+  }
+  .compare-table th:first-child {
+    background: #E8E0D0;
+    color: var(--muted);
+    text-align: left;
+  }
+  .compare-table th.cn-col {
+    background: var(--red);
+    color: #fff;
+  }
+  .compare-table th.us-col {
+    background: var(--blue);
+    color: #fff;
+  }
+  .compare-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.7;
+  }
+  .compare-table td:first-child {
+    font-weight: 600;
+    color: var(--muted);
+    background: #F2EDE3;
+    white-space: nowrap;
+  }
+  .compare-table td.cn-val {
+    background: rgba(192,57,43,0.04);
+    border-left: 3px solid rgba(192,57,43,0.25);
+  }
+  .compare-table td.us-val {
+    background: rgba(26,58,92,0.04);
+    border-left: 3px solid rgba(26,58,92,0.25);
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+
+  /* ── PULL QUOTE ── */
+  .pull-quote {
+    position: relative;
+    margin: 40px 0;
+    padding: 24px 32px 24px 48px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.04));
+    border-right: 4px solid var(--gold);
+  }
+  .pull-quote::before {
+    content: '"';
+    font-family: 'Playfair Display', serif;
+    font-size: 80px;
+    color: var(--gold);
+    opacity: 0.4;
+    position: absolute;
+    left: 10px;
+    top: -10px;
+    line-height: 1;
+  }
+  .pull-quote p {
+    font-size: 16px;
+    font-style: italic;
+    color: #4A3B20;
+    margin: 0;
+  }
+
+  /* ── DUAL PANEL ── */
+  .dual-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 28px 0;
+  }
+  .panel {
+    padding: 22px 24px;
+    border-top: 4px solid;
+  }
+  .panel-cn {
+    border-color: var(--red);
+    background: rgba(192,57,43,0.04);
+  }
+  .panel-us {
+    border-color: var(--blue);
+    background: rgba(26,58,92,0.04);
+  }
+  .panel-label {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .panel-cn .panel-label { color: var(--red); }
+  .panel-us .panel-label { color: var(--blue); }
+  .panel p {
+    font-size: 14.5px;
+    line-height: 1.8;
+    margin: 0;
+  }
+
+  /* ── KEY TERM ── */
+  strong { color: var(--deep-red); font-weight: 600; }
+
+  /* ── TIMELINE BAR ── */
+  .timeline {
+    margin: 28px 0;
+    border-left: 3px solid var(--border);
+    padding-left: 28px;
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 6px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--ivory);
+    box-shadow: 0 0 0 2px var(--gold);
+  }
+  .tl-year {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .tl-item p { margin: 0; font-size: 15px; }
+
+  /* ── CONCLUSION ── */
+  .conclusion {
+    margin-top: 72px;
+    padding: 40px;
+    background: linear-gradient(135deg, var(--deep-red) 0%, #2A1A40 50%, var(--deep-blue) 100%);
+    color: rgba(255,255,255,0.88);
+    position: relative;
+    overflow: hidden;
+  }
+  .conclusion::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 30px,
+      rgba(255,255,255,0.02) 30px,
+      rgba(255,255,255,0.02) 60px
+    );
+  }
+  .conclusion h3 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 20px;
+    color: var(--gold);
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .conclusion p {
+    color: rgba(255,255,255,0.82);
+    font-size: 15.5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 32px;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 12px;
+    color: var(--border);
+    letter-spacing: 0.12em;
+    border-top: 1px solid var(--border);
+    margin-top: 0;
+  }
+
+  @media (max-width: 600px) {
+    .dual-panel { grid-template-columns: 1fr; }
+    .compare-table { font-size: 13px; }
+    header { padding: 50px 24px 50px; }
+    .container { padding: 40px 20px 80px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="flag-strip">
+    <div class="flag-badge"><span class="dot dot-cn"></span>中华人民共和国</div>
+    <span class="divider-flag">⟷</span>
+    <div class="flag-badge"><span class="dot dot-us"></span>美利坚合众国</div>
+  </div>
+  <h1>中美经济体制的<em>差异</em></h1>
+  <div class="header-sub">两种发展道路的深度比较</div>
+</header>
+
+<div class="container">
+
+  <div class="intro-card">
+    中国与美国是当今世界最大的两个经济体，2024年两国GDP合计约占全球总量的43%。然而，这两个体量相近的庞然大物，却走在截然不同的发展道路上——一个以党和国家为主轴，以计划与市场的双轨协调为特色；另一个以私人产权与自由竞争为基石，以联邦分权制衡为架构。这种差异，不是偶然产生的历史枝节，而是两种文明在面对现代化挑战时所做出的深层选择。
+  </div>
+
+  <!-- ①所有制 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div class="section-title">所有制结构：<span>公有制主体</span>与私有产权主导</div>
+    </div>
+
+    <p>所有制形式是区分不同经济体制最根本的标尺。在中国，宪法明确规定<strong>公有制是社会主义经济制度的基础</strong>，包括全民所有制（国有）与集体所有制两种形式。国有企业在能源、金融、电信、交通、军工等关键领域牢牢占据支配地位，国有资产监督管理委员会（国资委）直接管理约百家央企，其资产总量以数十万亿元人民币计。与此同时，自1978年改革开放以来，私营经济的地位逐渐获得认可，"非公有制经济是社会主义市场经济的重要组成部分"这一表述写入党的文件，民营企业贡献了全国50%以上的税收、60%以上的GDP，以及80%以上的城镇就业。</p>
+
+    <p>然而，这种"混合"并非对等。<strong>党对国企的政治控制从未松动</strong>：党委嵌入企业治理结构，党委书记与董事长有时由同一人兼任，重大决策须经党组审批。即便是蓬勃发展的民营企业，阿里巴巴、腾讯、滴滴等科技巨头在2020年代初遭遇的大规模整改，清晰地揭示了党和国家对私人资本边界的最终裁量权。</p>
+
+    <p>美国的情形截然相反。<strong>私有财产神圣不可侵犯</strong>是美国宪法第五修正案的核心原则之一，政府"征收"私产须给予公平补偿。美国几乎不存在真正意义上的国有企业——美国邮政（USPS）、半官方性质的房利美与房地美（联邦住房贷款机构），以及田纳西河流域管理局（TVA），是为数不多的例外，且均在市场环境中运作，承受商业压力。美国企业所有权分散于数以亿计的股东、养老基金、共同基金之中，通过华尔街的证券市场实现资本的配置与流动。</p>
+
+    <div class="dual-panel">
+      <div class="panel panel-cn">
+        <div class="panel-label">🇨🇳 中国</div>
+        <p>公有制为主体，国有企业主导战略领域；党的意志渗透所有制安排；混合所有制改革推进但国家控制权保留；土地国有，农村土地集体所有，使用权可流转。</p>
+      </div>
+      <div class="panel panel-us">
+        <div class="panel-label">🇺🇸 美国</div>
+        <p>私有制主导，企业所有权高度分散；政府几乎不直接持有产业资产；土地私有，产权受宪法严格保护；反垄断法防止私人资本过度集中。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ②资源配置 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div class="section-title">资源配置机制：<span>计划与市场</span>的不同权重</div>
+    </div>
+
+    <p>中国自我定义为<strong>社会主义市场经济</strong>，这一提法本身就是对传统计划经济与自由市场经济的双重扬弃。市场在资源配置中发挥"决定性作用"（2013年十八届三中全会用语），但国家通过五年规划、产业政策、信贷窗口指导、行政价格干预等一系列机制，对经济走向保持强有力的塑造能力。</p>
+
+    <p><strong>五年规划</strong>是中国经济治理最具特色的制度安排。每隔五年，国家发展和改革委员会（发改委）牵头制定纲领性文件，确定增长目标、重点产业、区域战略与社会指标，层层分解至各省市县。这种"目标管理"体系虽不像毛泽东时代那样指令配给物资，却通过资金投向、土地审批、信贷支持等政策工具实现定向引导。</p>
+
+    <p>美国的资源配置则主要依赖<strong>价格信号与市场竞争</strong>。联邦政府在宏观层面通过财政政策（国会预算与税收立法）和货币政策（美联储利率决策）影响总需求，但不直接介入产业布局。市场失灵领域（如国防、基础研究、公共卫生）由政府补充，但政府采购、研发补贴、军事支出本身也在竞争性市场中运行。硅谷的崛起、生物技术的繁荣，主要归功于风险资本与自由竞争，而非政府的产业规划。</p>
+
+    <div class="compare-table-wrap" style="overflow-x:auto;">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>比较维度</th>
+          <th class="cn-col">🇨🇳 中国</th>
+          <th class="us-col">🇺🇸 美国</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>资源配置主体</td>
+          <td class="cn-val">市场为主，国家强力引导</td>
+          <td class="us-val">市场为主，政府有限补充</td>
+        </tr>
+        <tr>
+          <td>规划文件</td>
+          <td class="cn-val">五年规划（强制性目标）</td>
+          <td class="us-val">无国家产业规划（例外：近年《芯片法》等）</td>
+        </tr>
+        <tr>
+          <td>利率决策</td>
+          <td class="cn-val">中国人民银行，受国务院领导</td>
+          <td class="us-val">美联储，法定独立，不受总统直接指令</td>
+        </tr>
+        <tr>
+          <td>价格管制</td>
+          <td class="cn-val">能源、公用事业、部分农产品存在政府定价</td>
+          <td class="us-val">极少，主要依赖市场出清</td>
+        </tr>
+        <tr>
+          <td>产业政策</td>
+          <td class="cn-val">制造2025、双碳目标、新质生产力</td>
+          <td class="us-val">传统上有限，近年《通胀削减法》《芯片法》转向</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- ③金融体系 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div class="section-title">金融体系：<span>国家主导银行业</span>与资本市场驱动</div>
+    </div>
+
+    <p>金融体系是经济体制的"血液循环系统"。中国金融体系以<strong>国有银行为核心</strong>：工商银行、建设银行、农业银行、中国银行四大行长期占据银行业资产的半壁江山，政策性银行（国家开发银行、农业发展银行、进出口银行）则承担国家战略融资职能，向"一带一路"项目、产业升级、棚改货币化等政策任务输血。银行信贷的流向，受到中央银行窗口指导、差别准备金率以及国有银行董事会政治任命的多重影响，与单纯的市场风险定价逻辑并不完全吻合。</p>
+
+    <p>中国的股票市场（沪深两市）成立至今已超过三十年，但其<strong>资本形成功能远弱于融资配给功能</strong>。IPO审批权长期由监管机构掌握，退市机制不健全，散户占主导、投机色彩浓厚，股市常被视为政策工具而非独立的资产定价机制。</p>
+
+    <p>美国金融体系则以<strong>资本市场为主轴</strong>。纽约证券交易所与纳斯达克是全球最大、最深、流动性最强的股票市场，股权融资是科技、医药等创新企业的主要资金来源。债券市场（尤其是美国国债市场）规模庞大，是全球最重要的无风险利率基准。私募股权、风险投资、对冲基金共同构成多元的风险配置生态。美联储独立于政治权力之外，其货币政策决策以通货膨胀与就业双目标为准绳，而非政府财政需要。</p>
+
+    <div class="pull-quote">
+      <p>中国的金融体系服务于国家意志，美国的金融体系服务于资本逻辑——两者都不是纯粹的市场，只是国家与资本的权力边界画在了不同的地方。</p>
+    </div>
+  </div>
+
+  <!-- ④政府角色 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div class="section-title">政府角色与监管方式：<span>发展型国家</span>与规则型国家</div>
+    </div>
+
+    <p>政治经济学家将中国归类为<strong>"发展型国家"（Developmental State）</strong>——政府不仅设定经济目标，更积极介入产业发展过程。地方政府（省市县）扮演"准企业家"角色：招商引资、设立产业园区、补贴龙头企业、整合土地资源。GDP增长长期是官员晋升考核的关键指标，这一激励结构直接推动了地方政府的投资冲动与"锦标赛竞争"。</p>
+
+    <p>中央政府通过发改委、工信部、商务部等部门，对关键产业的进入许可、产能规模、技术路线加以引导。近年来，<strong>数字经济监管的急剧收紧</strong>（反垄断调查、数据安全立法、教育培训行业整顿）则展示了政府在认定必要时对私人资本的强制纠偏能力。</p>
+
+    <p>美国联邦政府在传统上奉行<strong>"守夜人"式的最小干预原则</strong>。监管机构（SEC、FTC、FDA、EPA等）以规则制定者而非产业规划者自居，通过法规标准与司法执法而非行政指令进行治理。反垄断法（谢尔曼法、克莱顿法）以保护竞争秩序为目标，而非扶持特定企业或产业。联邦制结构使各州保留相当的经济监管权，形成制度竞争：特拉华州的公司法宽松吸引企业注册，加州的环保与劳工标准则走在全国前列。</p>
+
+    <p>然而，近年美国的产业政策出现了重要转向。《芯片与科学法案》（2022年）向半导体制造业投入527亿美元补贴，《通胀削减法案》（2022年）以近4000亿美元的规模推动清洁能源转型，这标志着美国悄然向更具干预主义色彩的方向偏移——部分原因恰恰是对中国产业政策挑战的战略回应。</p>
+  </div>
+
+  <!-- ⑤劳动市场 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div class="section-title">劳动力市场：<span>户籍制度的约束</span>与劳动力自由流动</div>
+    </div>
+
+    <p>劳动力市场的组织方式深刻影响着劳动报酬的分配与劳动者的议价能力。中国劳动力市场最独特的结构性约束，是持续了七十余年的<strong>户籍制度</strong>（Hukou）。该制度将居民的社会公共服务资格（教育、医疗、社保、住房）与出生地行政档案深度绑定，造成城乡之间、大城市与中小城市之间的劳动力流动成本极高。</p>
+
+    <p>约3亿规模的<strong>农民工群体</strong>是中国制造业与建筑业的主力，他们的子女在城市就读权利受限，自身的社保待遇也长期低于城镇户籍居民。这一结构性不平等既是压低劳动力成本、维系中国制造业竞争优势的制度根源，也是制约内需扩张、加剧收入差距的深层症结。</p>
+
+    <p>中国的工会体系由<strong>中华全国总工会</strong>统一管理，其本质是党的群众组织而非独立的劳资谈判主体。工人缺乏通过罢工等集体行动向资方施压的法律保障，劳动合同法（2008年）虽大幅加强了个体劳动者的法律保护，但集体谈判权依然受限。</p>
+
+    <p>美国劳动力市场则以<strong>高度流动性与地理迁徙自由</strong>为特征，不存在任何制度性障碍阻止劳动者跨州流动。工会（AFL-CIO等）依法享有集体谈判权，尽管私营部门工会化率已从1950年代的35%跌至当前约6%，工会力量大幅式微。雇用自由（At-will employment）原则在大多数州占主导，使雇主有权随时解雇员工，灵活性高但保障性弱。最低工资由联邦标准（长期偏低）与各州标准（差异显著）共同构成，加利福尼亚州最低时薪已超过20美元。</p>
+  </div>
+
+  <!-- ⑥对外经济 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div class="section-title">对外经济关系：<span>汇率管制与资本管制</span>对比开放资本账户</div>
+    </div>
+
+    <p>中国迄今未实现资本账户的完全自由化。<strong>人民币汇率</strong>由中国人民银行在"有管理的浮动"框架下运作，每日设定中间价，设置上下2%的波动区间。资本管制（Capital Controls）限制了境外资金大规模流入或流出，国内居民个人年度购汇额度上限为5万美元。这套安排赋予中国宏观政策更大的自主空间——不必像小型开放经济体那样在"三元悖论"（固定汇率、资本自由流动、独立货币政策）中做出痛苦取舍，但也限制了人民币成为真正国际储备货币的进程。</p>
+
+    <p>外资准入方面，中国以<strong>"负面清单"制度</strong>逐步放开，但战略产业（媒体、电信、金融、教育等）依然设有严格限制。外资企业常面临市场准入不对等、知识产权保护不足、数据跨境限制等问题，这也是中美贸易摩擦的核心议题之一。</p>
+
+    <p>美国则拥有全球最开放的资本账户，美元作为<strong>世界主要储备货币</strong>，美联储的货币政策事实上成为全球金融条件的主要锚定因素。外资在美投资受到平等对待的法律保障，但涉及国家安全的并购须经外国投资委员会（CFIUS）审查。近年来，美国对中国高科技投资的审查日趋严格，出口管制（Entity List、EAR）被作为战略竞争的重要工具。</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-year">2018年</div>
+        <p>美国对华加征关税，中美贸易战全面爆发，双边经贸关系进入结构性调整期。</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2019–2020年</div>
+        <p>美国将华为等中国科技企业列入出口管制实体清单，供应链"脱钩"压力上升。</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2022年</div>
+        <p>美国《芯片法》颁布，限制接受补贴企业在中国投资先进芯片产能，科技竞争白热化。</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2023–2024年</div>
+        <p>美国发布对华投资限制行政令，限制美国资本流向中国半导体、量子计算、AI领域。</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2025年</div>
+        <p>特朗普政府大幅加征对华关税，双边经贸体系面临深度重构压力。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦社会保障 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <div class="section-title">社会保障与公共服务：<span>覆盖广但待遇薄</span>与私人化高成本</div>
+    </div>
+
+    <p>中国的社会保障体系在过去二十年经历了快速扩张，养老保险、基本医疗保险、失业保险、工伤保险、生育保险（"五险"）和住房公积金（"一金"）构成基本框架。然而，<strong>制度碎片化</strong>与城乡二元格局是突出问题：城镇职工与城乡居民享受截然不同的待遇水平，各省市统筹层次参差不齐，养老金替代率普遍偏低（约40–50%），医疗保险的实际报销比例因地区和险种差异悬殊。</p>
+
+    <p>教育方面，九年义务教育已基本普及，但优质资源高度集中于大城市与重点学校，学区房现象折射出教育公平的深层困境。高等教育扩招使大学入学率大幅提升，但与此同时也引发了结构性就业错配问题。</p>
+
+    <p>美国的社会保障体系规模庞大但结构迥异。联邦社会保险（Social Security）与医疗保险（Medicare/Medicaid）是核心支柱，但<strong>医疗保险并未覆盖全体国民</strong>——在《平价医疗法》（奥巴马医改）实施前，有超过4000万人没有医疗保险；即便在改革后，仍有相当数量的人口处于保险覆盖盲区。美国医疗支出占GDP的比例约为18%，远高于其他发达国家，但健康结局指标（预期寿命等）并无相应优势，医疗系统的高成本与低效率是长期争议焦点。</p>
+
+    <p>高等教育方面，美国顶尖研究型大学（常春藤盟校等）举世公认，但高昂的学费与学生债务危机（联邦学生贷款余额超过1.7万亿美元）也令无数年轻人望而却步，教育不平等问题日趋严峻。</p>
+  </div>
+
+  <!-- ⑧增长逻辑 -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">08</div>
+      <div class="section-title">增长逻辑与发展阶段：<span>投资拉动转型</span>与消费创新驱动</div>
+    </div>
+
+    <p>理解两国经济体制差异，还需将其置于各自所处的<strong>发展阶段</strong>与增长模式演变中加以考察。中国在改革开放后长达三十余年的高速增长，主要依赖三驾马车中的<strong>投资与出口</strong>。固定资产投资（基础设施、制造业、房地产）占GDP的比例长期高达40%以上，显著高于国际同类经济体，这一模式积累了强大的生产能力，但也埋下了产能过剩、债务杠杆高企与资产泡沫的风险。</p>
+
+    <p>中国政府清醒地意识到这种增长模式的不可持续性，"供给侧结构性改革"（2016年）、"双循环"战略（2020年）、"新质生产力"（2024年）等一系列政策表述，反映了从投资驱动向创新与消费驱动转型的战略意图。然而，<strong>内需不足</strong>（居民消费率约38%，远低于美国的70%）与房地产行业深度调整（恒大等房企暴雷）的叠加，使转型面临巨大阵痛。</p>
+
+    <p>美国经济的增长引擎则长期以<strong>消费与创新</strong>为主导，居民个人消费支出约占GDP的70%。以硅谷为代表的技术创新生态系统，通过风险资本、专利保护、世界一流大学与宽容失败的创业文化，持续产出破坏性创新。美元的国际储备货币地位使美国得以维持长期贸易逆差，以消费拉动世界经济，也积累了庞大的外债存量。</p>
+
+    <div class="dual-panel">
+      <div class="panel panel-cn">
+        <div class="panel-label">🇨🇳 当前挑战</div>
+        <p>房地产泡沫消化、地方债务重组、青年失业率高企、人口老龄化加速、外部技术封锁压力——中国模式面临深度压力测试。</p>
+      </div>
+      <div class="panel panel-us">
+        <div class="panel-label">🇺🇸 当前挑战</div>
+        <p>财政赤字与债务规模持续攀升、贫富分化加剧、基础设施老化、政治极化影响政策连续性——美国模式的内部张力日益凸显。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 结语 -->
+  <div class="conclusion">
+    <h3>结语：没有终局，只有演化</h3>
+    <p>中美两种经济体制，各自都有其内在逻辑与历史合理性。中国模式在短期动员资源、推进工业化、应对外部冲击方面展现出惊人的效率，但国家权力的高度集中与市场机制的内在活力之间存在持久张力；美国模式在激励个体创新、保护产权、维护市场竞争方面具有显著优势，但分配不平等、政策碎片化与民主政治的短视效应也是固有痼疾。</p>
+    <p style="margin-top:16px;">两种体制正处于相互竞争又相互学习的复杂关系中——美国向产业政策借鉴，中国向市场机制靠拢，双方都在对方的压力下进行自我调适。这场竞争的结果，不会是某一方的彻底胜利，而将深刻塑造21世纪全球经济秩序的底层结构。</p>
+    <p style="margin-top:16px; font-size:14px; color:rgba(255,255,255,0.45);">本文字数约5,200字 · 分析截至2025年</p>
+  </div>
+
+</div>
+
+<footer>中美经济体制比较研究 · 约5,200字 · 仅供参考</footer>
+
+</body>
+</html>
