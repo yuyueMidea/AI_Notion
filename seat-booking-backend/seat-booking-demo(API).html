@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>工位预订管理系统 Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --line: #dfe5ef;
+      --text: #25324a;
+      --muted: #6b778c;
+      --available-bg: #dff3e7;
+      --available-text: #146c43;
+      --booked-bg: #fde2e2;
+      --booked-text: #a61e2d;
+      --fixed-bg: #e9edf3;
+      --fixed-text: #495057;
+      --disabled-bg: #f5f5f5;
+      --disabled-text: #777;
+      --primary-soft: rgba(13, 110, 253, 0.16);
+      --corridor-bg: #f7f9fc;
+      --corridor-line: #c9d4e5;
+      --seat-width: 96px;
+      --seat-height: 82px;
+      --seat-gap: 10px;
+      --block-padding: 16px;
+      --corridor-size: 88px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    .page-shell {
+      min-height: 100vh;
+      padding: 22px;
+    }
+
+    .main-card,
+    .side-card {
+      border: 0;
+      border-radius: 18px;
+      background: var(--card);
+      box-shadow: 0 12px 30px rgba(32, 47, 74, 0.08);
+    }
+
+    .page-title {
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .subtle-text {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #495057;
+      font-size: 0.92rem;
+      white-space: nowrap;
+    }
+
+    .legend-box {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      display: inline-block;
+    }
+
+    .summary-strip {
+      border-radius: 14px;
+      background: #f7faff;
+      border: 1px solid #d9e7ff;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+    }
+
+    .query-window {
+      color: #2759c7;
+      font-weight: 700;
+    }
+
+    .floor-scroll {
+      width: 100%;
+      height: calc(100vh - 295px);
+      min-height: 620px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.9), rgba(249,251,255,0.95));
+      padding: 20px;
+    }
+
+    .floor-map {
+      display: grid;
+      grid-template-columns:
+        max-content
+        var(--corridor-size)
+        max-content
+        var(--corridor-size)
+        max-content;
+      grid-template-rows:
+        max-content
+        var(--corridor-size)
+        max-content
+        var(--corridor-size)
+        max-content;
+      gap: 14px;
+      align-items: start;
+      width: max-content;
+      min-width: max-content;
+      margin: 0 auto;
+    }
+
+    .seat-block {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: var(--block-padding);
+      box-shadow: 0 8px 20px rgba(38, 57, 90, 0.05);
+      width: max-content;
+      min-width: calc(var(--seat-width) * 5 + var(--seat-gap) * 4 + var(--block-padding) * 2);
+    }
+
+    .block-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .block-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .block-meta {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .block-badge {
+      background: #eef4ff;
+      color: #2759c7;
+      border: 1px solid #cddcff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .seat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, var(--seat-width));
+      grid-auto-rows: var(--seat-height);
+      gap: var(--seat-gap);
+      width: max-content;
+    }
+
+    .seat {
+      width: var(--seat-width);
+      height: var(--seat-height);
+      border-radius: 12px;
+      border: 2px solid transparent;
+      padding: 7px 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .seat:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(27, 48, 80, 0.14);
+    }
+
+    .seat.fixed {
+      background: var(--fixed-bg);
+      color: var(--fixed-text);
+    }
+
+    .seat.available {
+      background: var(--available-bg);
+      color: var(--available-text);
+    }
+
+    .seat.booked {
+      background: var(--booked-bg);
+      color: var(--booked-text);
+    }
+
+    .seat.disabled {
+      background: var(--disabled-bg);
+      color: var(--disabled-text);
+      cursor: not-allowed;
+    }
+
+    .seat.selected {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 5px var(--primary-soft);
+      transform: translateY(-2px);
+    }
+
+    .seat-id {
+      width: 100%;
+      font-weight: 800;
+      font-size: 0.8rem;
+      line-height: 1.16;
+      white-space: normal;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .seat-status {
+      margin-top: 3px;
+      font-size: 0.74rem;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .seat-user {
+      margin-top: 2px;
+      font-size: 0.68rem;
+      line-height: 1.15;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: 0.92;
+    }
+
+    .corridor {
+      position: relative;
+      border-radius: 18px;
+      background:
+        repeating-linear-gradient(
+          135deg,
+          rgba(184, 197, 218, 0.18) 0px,
+          rgba(184, 197, 218, 0.18) 12px,
+          rgba(255, 255, 255, 0.52) 12px,
+          rgba(255, 255, 255, 0.52) 24px
+        ),
+        var(--corridor-bg);
+      border: 1px dashed var(--corridor-line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #7a879b;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .corridor.vertical {
+      min-width: var(--corridor-size);
+      min-height: 100%;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+
+    .corridor.horizontal {
+      min-height: var(--corridor-size);
+      width: 100%;
+    }
+
+    .corridor.cross {
+      min-width: var(--corridor-size);
+      min-height: var(--corridor-size);
+      writing-mode: initial;
+    }
+
+    .sidebar-sticky {
+      position: sticky;
+      top: 22px;
+    }
+
+    .side-card .card-body {
+      padding: 18px;
+    }
+
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .seat-info-empty,
+    .empty-card {
+      color: var(--muted);
+      background: #fafbfd;
+      border: 1px dashed #d7deea;
+      border-radius: 14px;
+      padding: 16px;
+      line-height: 1.8;
+    }
+
+    .info-row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #e8edf4;
+      font-size: 0.94rem;
+    }
+
+    .info-row:last-child {
+      border-bottom: 0;
+    }
+
+    .info-key {
+      color: var(--muted);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .status-available {
+      background: #e8f7ee;
+      color: #157347;
+    }
+
+    .status-booked {
+      background: #fff0f0;
+      color: #b02a37;
+    }
+
+    .status-fixed {
+      background: #eef1f5;
+      color: #495057;
+    }
+
+    .status-disabled {
+      background: #f2f2f2;
+      color: #6c757d;
+    }
+
+    .form-label {
+      font-weight: 700;
+      color: #344054;
+      font-size: 0.92rem;
+    }
+
+    .btn {
+      border-radius: 12px;
+    }
+
+    .note-box {
+      border-radius: 14px;
+      background: #f8fbff;
+      border: 1px solid #dbe7f7;
+      color: #5f6b7e;
+      padding: 12px;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+
+    .mini-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px dashed #e7edf5;
+      font-size: 0.92rem;
+    }
+
+    .mini-stat:last-child {
+      border-bottom: 0;
+    }
+
+    .mini-stat strong {
+      font-size: 1rem;
+    }
+
+    .invalid-hint {
+      font-size: 0.86rem;
+      color: #b02a37;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .api-box {
+      border: 1px solid #dbe7f7;
+      background: #f8fbff;
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 0.88rem;
+      color: #56657d;
+      word-break: break-all;
+    }
+
+    .reservation-list {
+      max-height: 310px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .reservation-item {
+      border: 1px solid #e4eaf3;
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+
+    .reservation-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .reservation-seat {
+      font-weight: 800;
+      color: #244fd6;
+    }
+
+    .reservation-meta {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.6;
+    }
+
+    .loading-layer {
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .connection-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 1px solid #d7e3ff;
+      background: #f3f7ff;
+      color: #2759c7;
+    }
+
+    .connection-badge.error {
+      border-color: #f3c2c2;
+      background: #fff1f1;
+      color: #b02a37;
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      display: inline-block;
+    }
+
+    @media (max-width: 1199px) {
+      .floor-scroll {
+        height: 720px;
+      }
+
+      .sidebar-sticky {
+        position: static;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .page-shell {
+        padding: 12px;
+      }
+
+      .floor-scroll {
+        min-height: 560px;
+        height: 620px;
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid page-shell">
+  <div class="row g-4">
+    <div class="col-xl-9">
+      <div class="card main-card">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+            <div>
+              <h2 class="page-title">🏢 工位预订管理系统</h2>
+              <div class="subtle-text">接口联调版：左侧井字格工位图，右侧工位信息、预订设置与当前时间窗预订。</div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-3">
+              <div class="legend-item">
+                <span class="legend-box" style="background:#dff3e7;"></span>可预订
+              </div>
+              <div class="legend-item">
+                <span class="legend-box" style="background:#fde2e2;"></span>已预订
+              </div>
+              <div class="legend-item">
+                <span class="legend-box" style="background:#e9edf3;"></span>固定工位
+              </div>
+              <div class="legend-item">
+                <span class="legend-box" style="background:#f5f5f5;"></span>停用
+              </div>
+            </div>
+          </div>
+
+          <div id="pageNotice" class="alert alert-info d-none mb-3"></div>
+
+          <div class="summary-strip d-flex justify-content-between flex-wrap gap-2 mb-4">
+            <div id="floorSummary">正在读取后端工位数据...</div>
+            <div>
+              <span class="query-window" id="queryWindowText">查询时间窗加载中...</span>
+              <span class="mx-2 text-secondary">｜</span>
+              <span class="text-primary fw-bold">布局：3 × 3 工位区块 + 横纵主走道</span>
+            </div>
+          </div>
+
+          <div class="floor-scroll">
+            <div id="floorMap" class="floor-map">
+              <div class="loading-layer">正在加载工位地图...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-3">
+      <div class="sidebar-sticky">
+
+        <div class="card side-card mb-3">
+          <div class="card-body">
+            <div class="panel-title">📋 工位信息</div>
+            <div id="seatInfo" class="seat-info-empty">
+              点击左侧任意工位，这里展示工位编号、所属区域、当前状态与预订详情。
+            </div>
+          </div>
+        </div>
+
+        <div class="card side-card mb-3">
+          <div class="card-body">
+            <div class="panel-title">📝 预订设置</div>
+
+            <form id="bookingForm">
+              <div class="mb-3">
+                <label class="form-label">工位编号</label>
+                <input type="text" class="form-control" id="seatNumber" readonly placeholder="请先选择工位">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">预订人</label>
+                <input type="text" class="form-control" id="bookerName" placeholder="请输入姓名">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">开始时间</label>
+                <input type="datetime-local" class="form-control" id="startTime">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">结束时间</label>
+                <input type="datetime-local" class="form-control" id="endTime">
+                <div id="timeError" class="invalid-hint">结束时间必须晚于开始时间。</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">备注</label>
+                <textarea class="form-control" id="bookingNote" rows="2" placeholder="可填写来访办公、临时驻场等说明"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100 mb-2" id="submitBookingBtn">
+                提交预订
+              </button>
+
+              <button type="button" class="btn btn-outline-danger w-100" id="cancelBookingBtn">
+                取消当前预订
+              </button>
+            </form>
+
+            <div class="note-box mt-3">
+              时间输入会自动刷新左侧工位可用状态；固定工位不可预订；已预订工位可按当前记录取消。
+            </div>
+          </div>
+        </div>
+
+        <div class="card side-card mb-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+              <div class="panel-title mb-0">⚙️ 数据状态</div>
+              <span id="connectionBadge" class="connection-badge">
+                <span class="connection-dot"></span>
+                初始化
+              </span>
+            </div>
+
+            <div class="api-box mb-3">
+              <div class="fw-bold mb-1">后端接口地址</div>
+              <div id="apiBaseText">http://127.0.0.1:8080</div>
+            </div>
+
+            <div class="mb-3" id="statsPanel"></div>
+
+            <button class="btn btn-outline-primary w-100" id="refreshBtn">
+              刷新工位与预订数据
+            </button>
+          </div>
+        </div>
+
+        <div class="card side-card">
+          <div class="card-body">
+            <div class="panel-title">📌 当前时间窗预订</div>
+            <div id="reservationList" class="reservation-list">
+              <div class="empty-card">正在读取预订列表...</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE_URL = 'http://127.0.0.1:8080';
+
+  // 前端仅负责“3 × 3 工位区块 + 井字走道”的展示顺序；
+  // 每个区域的工位总数、固定工位数量、固定工位姓名都由后端 seat_layout.json 配置决定。
+  const ZONE_GRID = [
+    ['A1', 'A2', 'A3'],
+    ['B1', 'B2', 'B3'],
+    ['C1', 'C2', 'C3']
+  ];
+
+  const FALLBACK_ZONE_NAMES = {
+    A1: '西北工位区',
+    A2: '北侧中区',
+    A3: '东北工位区',
+    B1: '西侧中区',
+    B2: '中央协作区',
+    B3: '东侧中区',
+    C1: '西南工位区',
+    C2: '南侧中区',
+    C3: '东南工位区'
+  };
+
+  const state = {
+    seats: [],
+    reservations: [],
+    selectedSeatId: null,
+    loading: false
+  };
+
+  const floorMap = document.getElementById('floorMap');
+  const floorSummary = document.getElementById('floorSummary');
+  const queryWindowText = document.getElementById('queryWindowText');
+  const seatInfo = document.getElementById('seatInfo');
+  const bookingForm = document.getElementById('bookingForm');
+  const seatNumber = document.getElementById('seatNumber');
+  const bookerName = document.getElementById('bookerName');
+  const startTime = document.getElementById('startTime');
+  const endTime = document.getElementById('endTime');
+  const bookingNote = document.getElementById('bookingNote');
+  const timeError = document.getElementById('timeError');
+  const submitBookingBtn = document.getElementById('submitBookingBtn');
+  const cancelBookingBtn = document.getElementById('cancelBookingBtn');
+  const statsPanel = document.getElementById('statsPanel');
+  const reservationList = document.getElementById('reservationList');
+  const refreshBtn = document.getElementById('refreshBtn');
+  const pageNotice = document.getElementById('pageNotice');
+  const connectionBadge = document.getElementById('connectionBadge');
+  const apiBaseText = document.getElementById('apiBaseText');
+
+  apiBaseText.textContent = API_BASE_URL;
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function toDatetimeLocalValue(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const h = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return `${y}-${m}-${d}T${h}:${min}`;
+  }
+
+  function setDefaultTimes() {
+    const now = new Date();
+    const start = new Date(now);
+    const end = new Date(now);
+
+    if (now.getHours() >= 18) {
+      start.setDate(start.getDate() + 1);
+      end.setDate(end.getDate() + 1);
+    }
+
+    start.setHours(9, 0, 0, 0);
+    end.setHours(18, 0, 0, 0);
+
+    startTime.value = toDatetimeLocalValue(start);
+    endTime.value = toDatetimeLocalValue(end);
+  }
+
+  function formatDateTime(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
+  function formatShortTimeRange(startValue, endValue) {
+    if (!startValue || !endValue) return '未设置查询时间窗';
+    return `${startValue.replace('T', ' ')} ～ ${endValue.replace('T', ' ')}`;
+  }
+
+  function validateTimeRange(showMessage = true) {
+    const start = startTime.value;
+    const end = endTime.value;
+
+    if (!start || !end) {
+      timeError.style.display = 'none';
+      return false;
+    }
+
+    const valid = new Date(start) < new Date(end);
+    timeError.style.display = valid ? 'none' : 'block';
+
+    if (!valid && showMessage) {
+      setNotice('结束时间必须晚于开始时间。', 'danger');
+    }
+
+    return valid;
+  }
+
+  function setNotice(message, type = 'info') {
+    if (!message) {
+      pageNotice.className = 'alert alert-info d-none mb-3';
+      pageNotice.textContent = '';
+      return;
+    }
+
+    pageNotice.className = `alert alert-${type} mb-3`;
+    pageNotice.textContent = message;
+  }
+
+  function setConnectionStatus(text, isError = false) {
+    connectionBadge.className = isError ? 'connection-badge error' : 'connection-badge';
+    connectionBadge.innerHTML = `
+      <span class="connection-dot"></span>
+      ${escapeHtml(text)}
+    `;
+  }
+
+  async function apiRequest(path, options = {}) {
+    const requestOptions = {
+      method: options.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      }
+    };
+
+    if (options.body !== undefined) {
+      requestOptions.body = JSON.stringify(options.body);
+    }
+
+    const response = await fetch(`${API_BASE_URL}${path}`, requestOptions);
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      payload = null;
+    }
+
+    if (!response.ok || !payload || payload.success !== true) {
+      const message = payload?.message || `请求失败，HTTP ${response.status}`;
+      throw new Error(message);
+    }
+
+    return payload.data;
+  }
+
+  function buildQueryString() {
+    const params = new URLSearchParams({
+      start_time: startTime.value,
+      end_time: endTime.value
+    });
+    return params.toString();
+  }
+
+  function getSelectedSeat() {
+    return state.seats.find(seat => seat.id === state.selectedSeatId) || null;
+  }
+
+  function getReservationByID(id) {
+    if (!id) return null;
+    return state.reservations.find(item => item.id === id) || null;
+  }
+
+  function getAvailabilityLabel(value) {
+    const map = {
+      available: '可预订',
+      booked: '已预订',
+      fixed: '固定工位',
+      disabled: '停用'
+    };
+    return map[value] || value || '-';
+  }
+
+  function getSeatDisplayTitle(seat) {
+    if (seat.availability === 'fixed' && seat.fixed_owner_name) {
+      return `${seat.code} · ${seat.fixed_owner_name}`;
+    }
+    return seat.code;
+  }
+
+  function getSeatSubText(seat) {
+    if (seat.availability === 'fixed') {
+      return seat.fixed_owner_name || '未配置姓名';
+    }
+    if (seat.availability === 'booked') {
+      return seat.current_booker || '已有预订';
+    }
+    if (seat.availability === 'disabled') {
+      return '暂停使用';
+    }
+    return '开放预订';
+  }
+
+  function createCorridor(className, label) {
+    const corridor = document.createElement('div');
+    corridor.className = `corridor ${className}`;
+    corridor.textContent = label;
+    return corridor;
+  }
+
+  function getZoneSeats(zoneCode) {
+    return state.seats.filter(seat => seat.zone_code === zoneCode);
+  }
+
+  function getZoneName(zoneCode, zoneSeats) {
+    return zoneSeats[0]?.zone_name || FALLBACK_ZONE_NAMES[zoneCode] || zoneCode;
+  }
+
+  function renderFloorMap() {
+    if (state.loading) {
+      floorMap.innerHTML = '<div class="loading-layer">正在加载工位地图...</div>';
+      return;
+    }
+
+    if (!state.seats.length) {
+      floorMap.innerHTML = '<div class="loading-layer">未读取到工位数据，请确认后端服务已启动。</div>';
+      return;
+    }
+
+    floorMap.innerHTML = '';
+
+    for (let gridRow = 0; gridRow < 5; gridRow++) {
+      for (let gridCol = 0; gridCol < 5; gridCol++) {
+        const isBlockRow = gridRow % 2 === 0;
+        const isBlockCol = gridCol % 2 === 0;
+
+        if (isBlockRow && isBlockCol) {
+          const rowIndex = gridRow / 2;
+          const colIndex = gridCol / 2;
+          const zoneCode = ZONE_GRID[rowIndex][colIndex];
+          floorMap.appendChild(buildSeatBlock(zoneCode));
+        } else if (!isBlockRow && !isBlockCol) {
+          floorMap.appendChild(createCorridor('cross', '交汇口'));
+        } else if (!isBlockRow && isBlockCol) {
+          floorMap.appendChild(createCorridor('horizontal', '横向走道'));
+        } else {
+          floorMap.appendChild(createCorridor('vertical', '纵向走道'));
+        }
+      }
+    }
+  }
+
+  function buildSeatBlock(zoneCode) {
+    const blockSeats = getZoneSeats(zoneCode);
+    const zoneName = getZoneName(zoneCode, blockSeats);
+
+    const availableCount = blockSeats.filter(seat => seat.availability === 'available').length;
+    const bookedCount = blockSeats.filter(seat => seat.availability === 'booked').length;
+    const fixedCount = blockSeats.filter(seat => seat.availability === 'fixed').length;
+    const disabledCount = blockSeats.filter(seat => seat.availability === 'disabled').length;
+
+    const block = document.createElement('div');
+    block.className = 'seat-block';
+    block.innerHTML = `
+      <div class="block-head">
+        <div>
+          <div class="block-title">${escapeHtml(zoneName)}</div>
+          <div class="block-meta">区块 ${escapeHtml(zoneCode)} · 共 ${blockSeats.length} 席</div>
+        </div>
+        <div class="block-badge">
+          空 ${availableCount} / 订 ${bookedCount} / 固 ${fixedCount}${disabledCount ? ` / 停 ${disabledCount}` : ''}
+        </div>
+      </div>
+      <div class="seat-grid"></div>
+    `;
+
+    const seatGrid = block.querySelector('.seat-grid');
+
+    if (!blockSeats.length) {
+      seatGrid.innerHTML = '<div class="empty-card" style="grid-column: span 5;">该区域暂无工位数据</div>';
+      return block;
+    }
+
+    blockSeats.forEach(seat => {
+      const seatDiv = document.createElement('div');
+      seatDiv.className = `seat ${seat.availability}`;
+
+      if (state.selectedSeatId === seat.id) {
+        seatDiv.classList.add('selected');
+      }
+
+      seatDiv.innerHTML = `
+        <div class="seat-id" title="${escapeHtml(getSeatDisplayTitle(seat))}">
+          ${escapeHtml(getSeatDisplayTitle(seat))}
+        </div>
+        <div class="seat-status">${escapeHtml(getAvailabilityLabel(seat.availability))}</div>
+        <div class="seat-user" title="${escapeHtml(getSeatSubText(seat))}">
+          ${escapeHtml(getSeatSubText(seat))}
+        </div>
+      `;
+
+      seatDiv.addEventListener('click', () => selectSeat(seat.id));
+      seatGrid.appendChild(seatDiv);
+    });
+
+    return block;
+  }
+
+  function renderSummary() {
+    const total = state.seats.length;
+    const fixed = state.seats.filter(seat => seat.availability === 'fixed').length;
+    const booked = state.seats.filter(seat => seat.availability === 'booked').length;
+    const available = state.seats.filter(seat => seat.availability === 'available').length;
+    const disabled = state.seats.filter(seat => seat.availability === 'disabled').length;
+
+    floorSummary.innerHTML = `
+      当前楼层：总部办公层 ｜ 共 <strong>${total}</strong> 个工位 ｜ 固定 <strong>${fixed}</strong> ｜ 已订 <strong>${booked}</strong> ｜ 可订 <strong>${available}</strong>${disabled ? ` ｜ 停用 <strong>${disabled}</strong>` : ''}
+    `;
+
+    queryWindowText.textContent = `查询时间：${formatShortTimeRange(startTime.value, endTime.value)}`;
+
+    statsPanel.innerHTML = `
+      <div class="mini-stat"><span>工位总数</span><strong>${total}</strong></div>
+      <div class="mini-stat"><span>固定工位</span><strong>${fixed}</strong></div>
+      <div class="mini-stat"><span>当前已订</span><strong>${booked}</strong></div>
+      <div class="mini-stat"><span>当前空闲</span><strong>${available}</strong></div>
+    `;
+  }
+
+  function renderSeatInfo(seat) {
+    if (!seat) {
+      seatInfo.className = 'seat-info-empty';
+      seatInfo.innerHTML = '点击左侧任意工位，这里展示工位编号、所属区域、当前状态与预订详情。';
+      return;
+    }
+
+    seatInfo.className = '';
+    const reservation = getReservationByID(seat.current_booking_id);
+
+    const statusClassMap = {
+      available: 'status-available',
+      booked: 'status-booked',
+      fixed: 'status-fixed',
+      disabled: 'status-disabled'
+    };
+
+    seatInfo.innerHTML = `
+      <div class="info-row">
+        <div class="info-key">工位展示</div>
+        <div><strong>${escapeHtml(getSeatDisplayTitle(seat))}</strong></div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">工位编号</div>
+        <div>${escapeHtml(seat.code)}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">所属区域</div>
+        <div>${escapeHtml(seat.zone_name)}（${escapeHtml(seat.zone_code)}）</div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">当前状态</div>
+        <div>
+          <span class="status-pill ${statusClassMap[seat.availability] || 'status-disabled'}">
+            ${escapeHtml(getAvailabilityLabel(seat.availability))}
+          </span>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">工位类型</div>
+        <div>${seat.seat_type === 'fixed' ? '固定人员工位' : '开放预订工位'}</div>
+      </div>
+      ${
+        seat.fixed_owner_name
+          ? `
+            <div class="info-row">
+              <div class="info-key">固定人员</div>
+              <div>${escapeHtml(seat.fixed_owner_name)}</div>
+            </div>
+          `
+          : ''
+      }
+      ${
+        seat.availability === 'booked'
+          ? `
+            <div class="info-row">
+              <div class="info-key">预订人</div>
+              <div>${escapeHtml(seat.current_booker || reservation?.booker_name || '-')}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-key">开始时间</div>
+              <div>${escapeHtml(formatDateTime(reservation?.start_time))}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-key">结束时间</div>
+              <div>${escapeHtml(formatDateTime(reservation?.end_time))}</div>
+            </div>
+          `
+          : ''
+      }
+    `;
+  }
+
+  function renderReservationList() {
+    if (state.loading) {
+      reservationList.innerHTML = '<div class="empty-card">正在读取预订列表...</div>';
+      return;
+    }
+
+    if (!state.reservations.length) {
+      reservationList.innerHTML = '<div class="empty-card">当前查询时间窗暂无有效预订。</div>';
+      return;
+    }
+
+    reservationList.innerHTML = state.reservations.map(item => `
+      <div class="reservation-item">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+          <div>
+            <div class="reservation-seat">${escapeHtml(item.seat_code)}</div>
+            <div class="fw-semibold">${escapeHtml(item.booker_name)}</div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary locate-reservation-btn"
+            data-seat-id="${item.seat_id}"
+          >
+            定位
+          </button>
+        </div>
+        <div class="reservation-meta">
+          ${escapeHtml(item.zone_name)}（${escapeHtml(item.zone_code)}）<br>
+          ${escapeHtml(formatDateTime(item.start_time))}<br>
+          至 ${escapeHtml(formatDateTime(item.end_time))}
+          ${item.note ? `<br>备注：${escapeHtml(item.note)}` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    reservationList.querySelectorAll('.locate-reservation-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const seatId = Number(button.dataset.seatId);
+        selectSeat(seatId);
+      });
+    });
+  }
+
+  function refreshFormState(seat) {
+    const submitDisabled = !seat || seat.availability !== 'available';
+    const cancelDisabled = !seat || seat.availability !== 'booked' || !seat.current_booking_id;
+
+    submitBookingBtn.disabled = submitDisabled;
+    cancelBookingBtn.disabled = cancelDisabled;
+    bookerName.disabled = submitDisabled;
+    bookingNote.disabled = submitDisabled;
+  }
+
+  function selectSeat(id) {
+    state.selectedSeatId = id;
+    const seat = getSelectedSeat();
+
+    if (!seat) {
+      seatNumber.value = '';
+      renderSeatInfo(null);
+      refreshFormState(null);
+      renderFloorMap();
+      return;
+    }
+
+    seatNumber.value = seat.code;
+    renderSeatInfo(seat);
+    refreshFormState(seat);
+    renderFloorMap();
+  }
+
+  function renderAll() {
+    renderSummary();
+    renderFloorMap();
+    renderReservationList();
+    const selectedSeat = getSelectedSeat();
+    renderSeatInfo(selectedSeat);
+    refreshFormState(selectedSeat);
+  }
+
+  async function refreshAllData({ quiet = false } = {}) {
+    if (!validateTimeRange(false)) {
+      renderSummary();
+      return;
+    }
+
+    state.loading = true;
+    renderFloorMap();
+    renderReservationList();
+    refreshBtn.disabled = true;
+
+    try {
+      const queryString = buildQueryString();
+      const [seatData, reservationData] = await Promise.all([
+        apiRequest(`/api/seats?${queryString}`),
+        apiRequest(`/api/reservations?status=active&${queryString}`)
+      ]);
+
+      state.seats = Array.isArray(seatData.items) ? seatData.items : [];
+      state.reservations = Array.isArray(reservationData.items) ? reservationData.items : [];
+
+      const selectedStillExists = state.seats.some(seat => seat.id === state.selectedSeatId);
+      if (!selectedStillExists) {
+        state.selectedSeatId = null;
+        seatNumber.value = '';
+      }
+
+      state.loading = false;
+      setConnectionStatus('接口已连接');
+      if (!quiet) {
+        setNotice('工位状态与当前时间窗预订列表已刷新。', 'success');
+      }
+      renderAll();
+    } catch (error) {
+      state.loading = false;
+      setConnectionStatus('接口未连接', true);
+      setNotice(`后端接口请求失败：${error.message}。请确认 Go 服务已启动，并监听 ${API_BASE_URL}。`, 'danger');
+      floorMap.innerHTML = '<div class="loading-layer">后端未连接，暂无法展示工位地图。</div>';
+      reservationList.innerHTML = '<div class="empty-card">后端未连接，暂无法读取预订列表。</div>';
+      floorSummary.textContent = '后端未连接，未读取到工位数据。';
+      statsPanel.innerHTML = '';
+      refreshFormState(null);
+    } finally {
+      refreshBtn.disabled = false;
+    }
+  }
+
+  bookingForm.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const seat = getSelectedSeat();
+    if (!seat) {
+      setNotice('请先选择一个可预订工位。', 'warning');
+      return;
+    }
+
+    if (seat.availability !== 'available') {
+      setNotice('当前工位在该时间窗不可预订，请重新选择。', 'warning');
+      return;
+    }
+
+    const name = bookerName.value.trim();
+    if (!name) {
+      setNotice('请填写预订人姓名。', 'warning');
+      return;
+    }
+
+    if (!validateTimeRange()) {
+      return;
+    }
+
+    submitBookingBtn.disabled = true;
+
+    try {
+      await apiRequest('/api/reservations', {
+        method: 'POST',
+        body: {
+          seat_code: seat.code,
+          booker_name: name,
+          start_time: startTime.value,
+          end_time: endTime.value,
+          note: bookingNote.value.trim()
+        }
+      });
+
+      bookerName.value = '';
+      bookingNote.value = '';
+      setNotice(`${seat.code} 预订成功。`, 'success');
+      await refreshAllData({ quiet: true });
+      selectSeat(seat.id);
+    } catch (error) {
+      setNotice(`预订失败：${error.message}`, 'danger');
+      await refreshAllData({ quiet: true });
+    } finally {
+      submitBookingBtn.disabled = false;
+      refreshFormState(getSelectedSeat());
+    }
+  });
+
+  cancelBookingBtn.addEventListener('click', async () => {
+    const seat = getSelectedSeat();
+
+    if (!seat || seat.availability !== 'booked' || !seat.current_booking_id) {
+      setNotice('当前工位没有可取消的有效预订。', 'warning');
+      return;
+    }
+
+    if (!confirm(`确认取消 ${seat.code} 当前时间窗内的预订吗？`)) {
+      return;
+    }
+
+    cancelBookingBtn.disabled = true;
+
+    try {
+      await apiRequest(`/api/reservations/${seat.current_booking_id}/cancel`, {
+        method: 'POST'
+      });
+
+      setNotice(`${seat.code} 的预订已取消。`, 'success');
+      await refreshAllData({ quiet: true });
+      selectSeat(seat.id);
+    } catch (error) {
+      setNotice(`取消失败：${error.message}`, 'danger');
+      await refreshAllData({ quiet: true });
+    } finally {
+      cancelBookingBtn.disabled = false;
+      refreshFormState(getSelectedSeat());
+    }
+  });
+
+  refreshBtn.addEventListener('click', () => {
+    refreshAllData();
+  });
+
+  let refreshTimer = null;
+  function handleTimeChanged() {
+    validateTimeRange(false);
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+      refreshAllData({ quiet: true });
+    }, 280);
+  }
+
+  startTime.addEventListener('change', handleTimeChanged);
+  endTime.addEventListener('change', handleTimeChanged);
+
+  setDefaultTimes();
+  renderSummary();
+  refreshAllData({ quiet: true });
+</script>
+
+</body>
+</html>

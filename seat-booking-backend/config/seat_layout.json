@@ -1,0 +1,69 @@
+{
+  "seat_code_prefix": "A-",
+  "seat_number_start": 1,
+  "seat_number_width": 3,
+  "zones": [
+    {
+      "zone_code": "A1",
+      "zone_name": "西北工位区",
+      "seat_count": 25,
+      "fixed_count": 8
+    },
+    {
+      "zone_code": "A2",
+      "zone_name": "北侧中区",
+      "seat_count": 25,
+      "fixed_count": 8
+    },
+    {
+      "zone_code": "A3",
+      "zone_name": "东北工位区",
+      "seat_count": 25,
+      "fixed_count": 8
+    },
+    {
+      "zone_code": "B1",
+      "zone_name": "西侧中区",
+      "seat_count": 25,
+      "fixed_count": 8
+    },
+    {
+      "zone_code": "B2",
+      "zone_name": "中央协作区",
+      "seat_count": 25,
+      "fixed_count": 8
+    },
+    {
+      "zone_code": "B3",
+      "zone_name": "东侧中区",
+      "seat_count": 25,
+      "fixed_count": 8
+    },
+    {
+      "zone_code": "C1",
+      "zone_name": "西南工位区",
+      "seat_count": 25,
+      "fixed_count": 4
+    },
+    {
+      "zone_code": "C2",
+      "zone_name": "南侧中区",
+      "seat_count": 25,
+      "fixed_count": 4
+    },
+    {
+      "zone_code": "C3",
+      "zone_name": "东南工位区",
+      "seat_count": 25,
+      "fixed_count": 4
+    }
+  ],
+  "fixed_owner_map": {
+    "A-001": "张三",
+    "A-002": "李四",
+    "A-003": "王敏",
+    "A-004": "赵磊",
+    "A-005": "陈晨",
+    "A-006": "刘洋"
+  }
+}
