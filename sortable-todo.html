@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>任务清单 · 拖拽排序</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F1EEE6;
+    --surface: #FFFFFF;
+    --surface-alt: #FBF8F2;
+    --ink: #2B2B2E;
+    --ink-dim: #726F68;
+    --accent: #F2542D;
+    --accent-soft: #FCEAE3;
+    --done: #7C9473;
+    --done-soft: #EAF0E6;
+    --border: #E4DFD2;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+
+  body {
+    background:
+      radial-gradient(rgba(43,43,46,0.06) 1px, transparent 1px) 0 0/22px 22px,
+      var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 36px 16px 90px;
+  }
+
+  .app-shell { width: 100%; max-width: 480px; }
+
+  header { text-align: center; margin-bottom: 22px; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  h1 {
+    font-family: "Sora", Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(24px, 5vw, 30px);
+    margin: 6px 0 6px;
+  }
+
+  .subtitle { font-size: 13px; color: var(--ink-dim); line-height: 1.6; }
+
+  /* ---------- add row ---------- */
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .add-row input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .add-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  .add-row button {
+    font-family: "Sora", sans-serif;
+    font-weight: 600;
+    font-size: 13.5px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0 20px;
+    cursor: pointer;
+  }
+  .add-row button:hover { background: #d8461f; }
+  .add-row button:active { transform: translateY(1px); }
+
+  /* ---------- toolbar ---------- */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .filters { display: flex; gap: 6px; background: var(--surface-alt); padding: 4px; border-radius: 999px; border: 1px solid var(--border); }
+
+  .filter-btn {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    color: var(--ink-dim);
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .filter-btn .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    background: rgba(43,43,46,0.08);
+    padding: 1px 6px;
+    border-radius: 999px;
+  }
+  .filter-btn.active { background: var(--ink); color: #fff; }
+  .filter-btn.active .count { background: rgba(255,255,255,0.2); }
+
+  #clearCompletedBtn {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    background: none;
+    border: none;
+    color: var(--ink-dim);
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
+  }
+  #clearCompletedBtn:hover { color: var(--accent); }
+
+  .sort-hint {
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    margin: 0 0 14px 2px;
+  }
+
+  /* ---------- list ---------- */
+  .task-list { list-style: none; margin: 0; padding: 0; }
+
+  .task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 2px rgba(43,43,46,0.04);
+  }
+
+  .task.is-dragging {
+    box-shadow: 0 12px 24px rgba(43,43,46,0.18);
+    transform: rotate(-1.2deg) scale(1.02);
+    cursor: grabbing;
+  }
+
+  .handle {
+    background: none;
+    border: none;
+    color: var(--ink-dim);
+    font-size: 16px;
+    cursor: grab;
+    padding: 4px 2px;
+    line-height: 1;
+    touch-action: none;
+  }
+  .handle:active { cursor: grabbing; }
+
+  .task[data-sortable-disabled] .handle {
+    color: #C9C4B6;
+    cursor: not-allowed;
+  }
+
+  .check {
+    width: 22px; height: 22px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .task.done .check { background: var(--done); border-color: var(--done); }
+
+  .text {
+    flex: 1;
+    font-size: 14.5px;
+    outline: none;
+    word-break: break-word;
+    cursor: text;
+  }
+  .task.done .text { color: var(--ink-dim); text-decoration: line-through; }
+
+  .text-input {
+    flex: 1;
+    font: inherit;
+    font-size: 14.5px;
+    border: none;
+    border-bottom: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--ink);
+    outline: none;
+    padding: 0;
+  }
+
+  .delete {
+    background: none;
+    border: none;
+    color: var(--ink-dim);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+  .delete:hover { color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-dim);
+    padding: 30px 10px;
+    display: none;
+  }
+  .empty-state.show { display: block; }
+
+  /* ---------- undo toast ---------- */
+  .undo-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translate(-50%, 20px);
+    background: var(--ink);
+    color: #fff;
+    font-size: 13px;
+    padding: 10px 10px 10px 16px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+    max-width: 90vw;
+  }
+  .undo-toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .undo-toast .msg { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .undo-toast .undo-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  button:focus-visible, .text:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { transition-duration: 0.01s !important; animation-duration: 0.01s !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <header>
+    <div class="eyebrow">Sortable List Demo</div>
+    <h1>任务清单</h1>
+    <p class="subtitle">一个基础、可复用的拖拽排序任务列表</p>
+  </header>
+
+  <form class="add-row" id="addForm">
+    <input id="addInput" type="text" placeholder="添加一项任务…" autocomplete="off" maxlength="120">
+    <button type="submit">添加</button>
+  </form>
+
+  <div class="toolbar">
+    <div class="filters" id="filters">
+      <button type="button" class="filter-btn active" data-filter="all">全部 <span class="count" id="countAll">0</span></button>
+      <button type="button" class="filter-btn" data-filter="active">未完成 <span class="count" id="countActive">0</span></button>
+      <button type="button" class="filter-btn" data-filter="completed">已完成 <span class="count" id="countCompleted">0</span></button>
+    </div>
+    <button type="button" id="clearCompletedBtn">清除已完成</button>
+  </div>
+
+  <p class="sort-hint">拖动 ⠿ 手柄调整顺序（仅在"全部"视图下可用），聚焦手柄后也可以用 ↑ / ↓ 键移动。双击文字可编辑。</p>
+
+  <ul class="task-list" id="taskList"></ul>
+  <p class="empty-state" id="emptyState">还没有任务，添加一个开始吧。</p>
+</div>
+
+<div class="undo-toast" id="undoToast">
+  <span class="msg" id="undoMsg"></span>
+  <button type="button" class="undo-btn" id="undoBtn">撤销</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================================
+   * REUSABLE MODULE: makeSortableList(listEl, options)
+   * -------------------------------------------------------------------------
+   * Turns any <ul>/<ol>'s direct children into a pointer-drag reorderable
+   * list. Has no knowledge of "tasks" or any specific domain - it only moves
+   * DOM nodes around and reports the resulting order back through a callback.
+   *
+   * Usage:
+   *   const sortable = makeSortableList(document.querySelector('#myList'), {
+   *     handle: '.handle',            // selector for the drag handle inside each item
+   *     draggingClass: 'is-dragging', // class applied to the item while dragging
+   *     onReorder(orderedIds){ ... }  // called with item ids (data-id) in new order
+   *   });
+   *   sortable.refresh(); // call after you replace/add <li> children
+   *
+   * Requirements on markup:
+   *   - Each direct child of listEl needs a unique `data-id` attribute.
+   *   - Each child should contain an element matching `options.handle`
+   *     (or omit `handle` to make the whole item draggable).
+   *   - To temporarily forbid dragging a specific item, set
+   *     `data-sortable-disabled` on that <li>.
+   * ========================================================================= */
+  function makeSortableList(listEl, options){
+    const opts = options || {};
+    const handleSelector = opts.handle || null;
+    const draggingClass = opts.draggingClass || 'is-dragging';
+    const onReorder = opts.onReorder || function(){};
+    const attached = new WeakSet();
+
+    function midOf(el){
+      const r = el.getBoundingClientRect();
+      return r.top + r.height / 2;
+    }
+
+    function currentOrderIds(){
+      return Array.from(listEl.children).map(li => li.dataset.id);
+    }
+
+    // FLIP: measure "First" position of affectedEls, run `mutate` (a DOM
+    // reorder), then measure "Last" position and animate the delta so the
+    // reorder looks like a smooth slide instead of an instant jump. Elements
+    // currently being dragged (position: fixed) are skipped since their
+    // position is already driven by the pointer, not by flow layout.
+    function flip(affectedEls, mutate){
+      const firstRects = new Map();
+      affectedEls.forEach(el => firstRects.set(el, el.getBoundingClientRect()));
+      mutate();
+      affectedEls.forEach(el => {
+        if (el.style.position === 'fixed') return;
+        const first = firstRects.get(el);
+        const last = el.getBoundingClientRect();
+        const dy = first.top - last.top;
+        if (dy){
+          el.style.transition = 'none';
+          el.style.transform = 'translateY(' + dy + 'px)';
+          requestAnimationFrame(() => {
+            el.style.transition = 'transform .18s ease';
+            el.style.transform = '';
+          });
+        }
+      });
+    }
+
+    function attach(item){
+      if (attached.has(item)) return;
+      attached.add(item);
+      const handle = handleSelector ? item.querySelector(handleSelector) : item;
+      if (!handle) return;
+
+      handle.addEventListener('pointerdown', (e) => {
+        if (item.hasAttribute('data-sortable-disabled')) return;
+        e.preventDefault();
+
+        const pointerId = e.pointerId;
+        const startY = e.clientY;
+        const rect = item.getBoundingClientRect();
+        const grabY = startY - rect.top;
+        const startLeft = rect.left;
+        const startWidth = rect.width;
+        let dragging = false;
+
+        try { handle.setPointerCapture(pointerId); } catch (err) {}
+
+        function reorderIfNeeded(){
+          const cur = item.getBoundingClientRect();
+          const curMid = cur.top + cur.height / 2;
+          const next = item.nextElementSibling;
+          const prev = item.previousElementSibling;
+          if (next && curMid > midOf(next)){
+            // Move `next` above `item`. Only `next` is relocated - `item`
+            // itself must never be passed to insertBefore while it holds
+            // pointer capture (via its handle), because some browsers
+            // silently release capture when the captured element or an
+            // ancestor of it is detached/reattached during a DOM move.
+            // Losing capture mid-drag is what causes the item to get
+            // permanently stuck floating (pointerup never reaches it again).
+            flip([item, next], () => listEl.insertBefore(next, item));
+          } else if (prev && curMid < midOf(prev)){
+            // Same principle: move `prev` down to right after `item`
+            // instead of moving `item` up before `prev`. Identical
+            // resulting order, but `item` is never touched.
+            flip([item, prev], () => listEl.insertBefore(prev, item.nextElementSibling));
+          }
+        }
+
+        function move(ev){
+          if (!dragging && Math.abs(ev.clientY - startY) > 4){
+            dragging = true;
+            item.classList.add(draggingClass);
+            item.style.position = 'fixed';
+            item.style.left = startLeft + 'px';
+            item.style.width = startWidth + 'px';
+            item.style.top = rect.top + 'px';
+            item.style.zIndex = 999;
+          }
+          if (dragging){
+            item.style.top = (ev.clientY - grabY) + 'px';
+            reorderIfNeeded();
+          }
+        }
+
+        function up(){
+          try { handle.releasePointerCapture(pointerId); } catch (err) {}
+          cleanup();
+        }
+
+        function onLostCapture(){
+          // Fires whenever pointer capture ends, for ANY reason - a normal
+          // release, the browser revoking it during a DOM move, the tab
+          // losing focus, etc. Treating this as the single source of truth
+          // for "the drag is over" means the item can no longer get stuck
+          // floating even if some other browser quirk drops capture that
+          // we haven't specifically anticipated.
+          cleanup();
+        }
+
+        function cleanup(){
+          if (cleanup.done) return; // pointerup + lostpointercapture both fire on a normal release; only run once
+          cleanup.done = true;
+          handle.removeEventListener('pointermove', move);
+          handle.removeEventListener('pointerup', up);
+          handle.removeEventListener('pointercancel', up);
+          handle.removeEventListener('lostpointercapture', onLostCapture);
+          if (dragging){
+            item.classList.remove(draggingClass);
+            item.style.position = '';
+            item.style.left = '';
+            item.style.top = '';
+            item.style.width = '';
+            item.style.zIndex = '';
+            onReorder(currentOrderIds());
+          }
+        }
+
+        handle.addEventListener('pointermove', move);
+        handle.addEventListener('pointerup', up);
+        handle.addEventListener('pointercancel', up);
+        handle.addEventListener('lostpointercapture', onLostCapture);
+      });
+
+      // Keyboard support: focus the handle, then Arrow Up/Down to move.
+      handle.addEventListener('keydown', (e) => {
+        if (item.hasAttribute('data-sortable-disabled')) return;
+        if (e.key === 'ArrowUp' && item.previousElementSibling){
+          e.preventDefault();
+          const prev = item.previousElementSibling;
+          flip([item, prev], () => listEl.insertBefore(item, prev));
+          onReorder(currentOrderIds());
+          handle.focus();
+        } else if (e.key === 'ArrowDown' && item.nextElementSibling){
+          e.preventDefault();
+          const next = item.nextElementSibling;
+          flip([item, next], () => listEl.insertBefore(next, item));
+          onReorder(currentOrderIds());
+          handle.focus();
+        }
+      });
+    }
+
+    function refresh(){
+      Array.from(listEl.children).forEach(attach);
+    }
+
+    refresh();
+    return { refresh: refresh };
+  }
+  /* ======================= end of reusable module ========================= */
+
+
+  /* -------------------------------------------------------------------------
+   * Todo app built on top of makeSortableList - everything below this line
+   * is domain logic (tasks, filters, editing, undo) and knows nothing about
+   * how dragging itself works.
+   * ---------------------------------------------------------------------- */
+
+  const listEl = document.getElementById('taskList');
+  const emptyState = document.getElementById('emptyState');
+  const addForm = document.getElementById('addForm');
+  const addInput = document.getElementById('addInput');
+  const filtersEl = document.getElementById('filters');
+  const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+  const countAll = document.getElementById('countAll');
+  const countActive = document.getElementById('countActive');
+  const countCompleted = document.getElementById('countCompleted');
+  const undoToast = document.getElementById('undoToast');
+  const undoMsg = document.getElementById('undoMsg');
+  const undoBtn = document.getElementById('undoBtn');
+
+  let idCounter = 1;
+  function nextId(){ return 't' + (idCounter++); }
+
+  let tasks = [
+    { id: nextId(), text: '确认这周的项目排期', done: false },
+    { id: nextId(), text: '把演示文稿发给团队', done: false },
+    { id: nextId(), text: '续上办公室咖啡', done: true },
+    { id: nextId(), text: '整理桌面文件', done: false },
+    { id: nextId(), text: '预约下周的评审会议', done: false }
+  ];
+  let filter = 'all';
+  let undoTimer = null;
+
+  const sortable = makeSortableList(listEl, {
+    handle: '.handle',
+    onReorder(orderedIds){
+      // orderedIds reflects the full task list only when filter === 'all'
+      // (dragging is disabled for other filters), so this is always safe.
+      tasks.sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
+    }
+  });
+
+  function buildItem(task){
+    const li = document.createElement('li');
+    li.className = 'task' + (task.done ? ' done' : '');
+    li.dataset.id = task.id;
+    if (filter !== 'all') li.setAttribute('data-sortable-disabled', '');
+
+    const handle = document.createElement('button');
+    handle.type = 'button';
+    handle.className = 'handle';
+    handle.setAttribute('aria-label', '拖动以调整"' + task.text + '"的顺序');
+    handle.textContent = '\u283F';
+
+    const check = document.createElement('button');
+    check.type = 'button';
+    check.className = 'check';
+    check.setAttribute('aria-pressed', String(task.done));
+    check.setAttribute('aria-label', task.done ? '标记为未完成' : '标记为已完成');
+    check.textContent = task.done ? '\u2713' : '';
+    check.addEventListener('click', () => {
+      task.done = !task.done;
+      render();
+    });
+
+    const text = document.createElement('span');
+    text.className = 'text';
+    text.textContent = task.text;
+    text.tabIndex = 0;
+    text.addEventListener('dblclick', () => startEdit(li, task));
+    text.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); startEdit(li, task); }
+    });
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'delete';
+    del.setAttribute('aria-label', '删除"' + task.text + '"');
+    del.textContent = '\u00D7';
+    del.addEventListener('click', () => removeTask(task.id));
+
+    li.appendChild(handle);
+    li.appendChild(check);
+    li.appendChild(text);
+    li.appendChild(del);
+    return li;
+  }
+
+  function startEdit(li, task){
+    const textEl = li.querySelector('.text');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'text-input';
+    input.value = task.text;
+    li.replaceChild(input, textEl);
+    input.focus();
+    input.select();
+
+    function commit(){
+      const val = input.value.trim();
+      task.text = val || task.text;
+      render();
+    }
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { e.preventDefault(); render(); }
+    });
+  }
+
+  function removeTask(id){
+    const idx = tasks.findIndex(t => t.id === id);
+    if (idx < 0) return;
+    const removed = tasks.splice(idx, 1)[0];
+    render();
+    showUndo(removed, idx);
+  }
+
+  function showUndo(task, idx){
+    clearTimeout(undoTimer);
+    undoMsg.textContent = '已删除 "' + task.text + '"';
+    undoToast.classList.add('show');
+    undoBtn.onclick = () => {
+      tasks.splice(idx, 0, task);
+      render();
+      undoToast.classList.remove('show');
+      clearTimeout(undoTimer);
+    };
+    undoTimer = setTimeout(() => undoToast.classList.remove('show'), 4000);
+  }
+
+  function updateCounts(){
+    const activeCount = tasks.filter(t => !t.done).length;
+    const doneCount = tasks.length - activeCount;
+    countAll.textContent = String(tasks.length);
+    countActive.textContent = String(activeCount);
+    countCompleted.textContent = String(doneCount);
+  }
+
+  function render(){
+    listEl.innerHTML = '';
+    const visible = tasks.filter(t => {
+      if (filter === 'active') return !t.done;
+      if (filter === 'completed') return t.done;
+      return true;
+    });
+    visible.forEach(t => listEl.appendChild(buildItem(t)));
+    sortable.refresh();
+    updateCounts();
+
+    if (visible.length === 0){
+      emptyState.textContent = filter === 'completed'
+        ? '还没有已完成的任务。'
+        : (filter === 'active' ? '所有任务都完成啦。' : '还没有任务，添加一个开始吧。');
+      emptyState.classList.add('show');
+    } else {
+      emptyState.classList.remove('show');
+    }
+  }
+
+  addForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = addInput.value.trim();
+    if (!val) return;
+    tasks.push({ id: nextId(), text: val, done: false });
+    addInput.value = '';
+    if (filter === 'completed') filter = 'all';
+    setActiveFilterButton();
+    render();
+  });
+
+  function setActiveFilterButton(){
+    filtersEl.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+  }
+
+  filtersEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    filter = btn.dataset.filter;
+    setActiveFilterButton();
+    render();
+  });
+
+  clearCompletedBtn.addEventListener('click', () => {
+    tasks = tasks.filter(t => !t.done);
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
