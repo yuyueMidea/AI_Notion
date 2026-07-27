@@ -425,3 +425,241 @@ function flushJobs() {
 | 首次是否执行 | 默认不执行(除非 immediate: true) | 定义时立刻执行一次 |
 
 本质上 `watchEffect` 就是 `doWatch` 内部 `cb` 为 `undefined` 的那条分支,复用了同一套 effect + 调度逻辑。
+
+---
+
+# `ref`/`reactive` 实现差异与 `shallow` 系列的应用场景
+
+## 一、为什么基本类型需要 `ref` 包一层
+
+### 根本原因:Proxy 只能代理对象
+
+`reactive` 的底层是 `new Proxy(target, handler)`,而 **Proxy 的第一个参数必须是对象**(Object、Array、Map、Set 等)。JS 的基本类型(`number`、`string`、`boolean`)是值类型,没有"引用"的概念,根本没法被 Proxy 拦截:
+
+```javascript
+const count = reactive(0) // 报错或无效!Proxy无法代理原始值
+count = 1 // 这只是普通变量赋值,不可能触发任何拦截逻辑
+```
+
+更本质的问题是:即使 Proxy 能代理基本类型,**赋值操作 `count = 1` 本身也不经过任何对象**,JS 语言层面没有给"给一个变量赋值"提供拦截入口(这跟对象属性赋值 `obj.count = 1` 会经过 `set` 陷阱完全不同)。
+
+所以 Vue 的解法是:**用一个对象包裹这个值**,把"改变量"变成"改对象的属性",这样才有了拦截的切入点。这个对象就是 `RefImpl`。
+
+### RefImpl 的实现
+
+```javascript
+class RefImpl {
+  constructor(value) {
+    this.__v_isRef = true
+    this._rawValue = value
+    // 如果传入的是对象,内部用reactive包一层(这就是ref可以包对象的原因)
+    this._value = isObject(value) ? reactive(value) : value
+    this.dep = undefined // 依赖收集容器
+  }
+  
+  get value() {
+    trackRefValue(this) // 收集依赖当前ref的effect
+    return this._value
+  }
+  
+  set value(newVal) {
+    // 用原始值比较,避免reactive代理对象参与比较导致误判
+    if (hasChanged(newVal, this._rawValue)) {
+      this._rawValue = newVal
+      this._value = isObject(newVal) ? reactive(newVal) : newVal
+      triggerRefValue(this) // 通知依赖更新
+    }
+  }
+}
+
+function ref(value) {
+  return new RefImpl(value)
+}
+```
+
+关键点:
+- `.value` 这个 getter/setter 本质上就是手写版的 `Object.defineProperty`,原理跟 Vue2 一模一样——只是**只需要给这一个 `value` 属性做拦截**,不需要递归遍历整个对象,所以开销远小于 Vue2 全量 defineProperty。
+- 这也是为什么模板里用 `ref` 不需要写 `.value`(编译时自动加了 unref 逻辑),但 JS 代码里必须手写 `.value`——**这不是 Vue 的语法糖选择,而是 JS 语言本身对"拦截赋值"这件事的能力边界决定的**。
+
+### track/trigger 的存储结构差异
+
+```javascript
+// reactive:依赖存在全局 WeakMap 里,以 target 对象为 key
+targetMap: WeakMap<target, Map<key, Set<effect>>>
+
+// ref:依赖直接挂在 ref 实例自己身上
+class RefImpl {
+  dep = new Set() // 就这一个属性,不需要Map,因为ref只有一个"key"(value)
+}
+```
+
+`reactive` 需要处理"一个对象上有很多 key,每个 key 对应一组依赖"的场景,所以用 `Map` 做 key 到依赖集合的映射;而 `ref` 天生只有一个"属性"要追踪,所以直接省掉了这一层,`dep` 直接是个 `Set`。这是一个针对使用场景做的存储结构精简。
+
+### reactive 转 ref:数据结构的兼容问题
+
+`toRefs` 是这个差异体现得最明显的地方——把一个 `reactive` 对象展开成多个独立 `ref`,同时保持响应性关联:
+
+```javascript
+function toRef(object, key) {
+  const val = object[key]
+  return isRef(val) ? val : new ObjectRefImpl(object, key)
+}
+
+class ObjectRefImpl {
+  get value() {
+    return this._object[this._key] // 每次都从原对象读,而不是自己存一份值
+  }
+  set value(newVal) {
+    this._object[this._key] = newVal // 写回原对象,触发原对象的Proxy set拦截
+  }
+}
+```
+
+这里 `ObjectRefImpl` 并不自己持有 dep,而是**代理读写到原始 reactive 对象上**——依赖收集和触发全部复用 reactive 那套 `targetMap`。这就是为什么解构 `reactive` 对象会丢失响应性(`const { count } = state` 只是拿到了值的拷贝),而 `toRefs(state)` 解构出来的每个属性依然是响应式的(因为它是个包了 getter/setter 的"引用",背后指回原对象)。
+
+## 二、reactive 为什么不能包裹基本类型,只能包对象
+
+反过来问:`reactive` 能不能像 `ref` 一样也支持基本类型?答案是设计上**故意不支持**,原因在于 Proxy 代理的是"访问行为",而基本类型的"访问"和"值本身"是不可分割的——你没法在不改变量本身指向的前提下,让语言层面对"读这个数字"这件事做拦截。这也是为什么源码里有这样一段防御性代码:
+
+```javascript
+function reactive(target) {
+  if (!isObject(target)) {
+    console.warn(`value cannot be made reactive: ${String(target)}`)
+    return target
+  }
+  ...
+}
+```
+
+## 三、shallowReactive 的应用场景
+
+`shallowReactive` 只代理对象的**第一层**,嵌套对象保持原样(不会被递归转换成响应式):
+
+```javascript
+function shallowReactive(target) {
+  return createReactiveObject(target, false, shallowReactiveHandlers)
+}
+
+// get 陷阱的区别
+const shallowGet = createGetter(false, true) // 第二个参数shallow=true
+function createGetter(isReadonly, shallow) {
+  return function get(target, key, receiver) {
+    const res = Reflect.get(target, key, receiver)
+    track(target, key)
+    if (shallow) {
+      return res // 关键:直接返回,不递归reactive()包裹
+    }
+    if (isObject(res)) {
+      return reactive(res) // 深层reactive才会走到这里递归代理
+    }
+    return res
+  }
+}
+```
+
+### 典型应用场景
+
+**1. 大型只读数据结构,只关心顶层是否被替换**
+
+比如一个从后端拉来的大对象,组件只关心整个对象被替换(比如刷新数据),不关心内部字段级别的变化:
+
+```javascript
+const bigData = shallowReactive({ list: hugeArrayFromApi, meta: {...} })
+// bigData.list = newList  → 触发更新
+// bigData.list.push(x)    → 不会触发更新(因为list内部不是响应式的)
+```
+
+如果这类数据用 `reactive`,Vue 会递归把整个大对象树全部转成 Proxy,对于大型列表/深层嵌套数据,这个初始化开销(以及后续每层访问都要做代理判断)是不必要的浪费。
+
+**2. 集成第三方状态管理库或外部不可变数据**
+
+比如接入 Immutable.js、或者某些库自己已经做了细粒度的变更追踪,你只需要在顶层"感知"到整个对象换了,不需要 Vue 再深度代理一遍,两套响应式系统嵌套反而容易冲突或产生性能浪费。
+
+**3. 性能优化:大型表单/表格的浅层响应**
+
+```javascript
+// 表格有几千行数据,但你只在"整个数据集replace"时才需要视图更新
+const tableState = shallowReactive({
+  rows: [] // 内部行数据变化不触发响应,只有rows整体赋值才触发
+})
+```
+
+## 四、shallowRef 的应用场景
+
+`shallowRef` 只让 `.value` 的**赋值本身**是响应式的,不会对内部值调用 `reactive()`:
+
+```javascript
+class RefImpl {
+  constructor(value, shallow) {
+    this._value = shallow ? value : (isObject(value) ? reactive(value) : value)
+    // shallow为true时,即使传入对象,也不做reactive包裹
+  }
+}
+```
+
+### 典型应用场景
+
+**1. 大型不可变数据结构,只替换不修改**
+
+这是官方文档明确推荐的模式——**结合 `triggerRef` 强制刷新**:
+
+```javascript
+const state = shallowRef({ count: 0 })
+
+// 内部修改不会触发更新(因为state.value本身不是reactive代理)
+state.value.count++ 
+
+// 必须整体替换才会触发
+state.value = { count: 1 } 
+
+// 或者手动强制通知(在你明确知道内部值变了、但又不想承担深度代理成本时)
+state.value.count++
+triggerRef(state) // 手动触发依赖更新
+```
+
+**2. 集成第三方库实例(尤其是类实例,如 Three.js、ECharts、CodeMirror)**
+
+```javascript
+const chart = shallowRef(null)
+onMounted(() => {
+  chart.value = echarts.init(chartDom) // 只关心这个实例本身被创建/替换
+  // 不需要Vue深度代理echarts实例内部成百上千的属性和方法
+  // 否则会拖慢第三方库自身的运行(而且很多库内部有getter/setter,和Proxy冲突)
+})
+```
+
+这是一个**极其重要的实践场景**——如果用普通 `ref` 包一个复杂类实例,Vue 会递归代理这个实例的所有属性,可能:
+- 严重拖慢性能(类实例往往有大量内部状态)
+- 破坏类的 `this` 绑定或私有字段访问(Proxy 代理后 `this` 指向可能出问题)
+- 触发意料之外的响应式追踪,导致不必要的重渲染
+
+**3. 大型列表/表单场景做"手动脏检查"式优化**
+
+```javascript
+const bigList = shallowRef(originalArray)
+
+function updateOneItem(index, newVal) {
+  bigList.value[index] = newVal // 不触发响应
+  triggerRef(bigList) // 主动决定"现在需要更新视图了"
+}
+```
+
+这本质上是从 Vue 的"自动依赖追踪"退化回"手动通知"模式,牺牲一部分响应式的便利性,换取跳过深层代理的性能收益——适合数据量极大、更新频率高、但视图只需要"知道数据变了"而不需要细粒度追踪到具体哪个字段变化的场景(比如实时行情、游戏状态)。
+
+## 五、一张图梳理响应式 API 的粒度谱系
+
+```
+细粒度(全深度代理)          粗粒度(仅顶层/仅引用整体)
+reactive  ──────────────────────  shallowReactive
+   │                                    │
+   │  (基本类型无法代理,需要包一层)          │
+   ▼                                    ▼
+  ref  ────────────────────────── shallowRef
+(value是对象时内部自动reactive)   (value是对象时不递归代理)
+```
+
+选择哪个本质上是在**"响应式的便利性"和"代理的性能开销"**之间做取舍:数据量小、需要细粒度响应 → 用深度版本;数据量大、只关心整体替换、或者要接入不希望被 Proxy 干预的第三方对象 → 用 shallow 版本。
+
+---
+
+继续往下挖的话,几个方向都挺有意思:**`readonly`/`shallowReadonly` 的实现(以及它跟 `reactive` 嵌套使用时,`isReadonly` 优先级怎么处理冲突)**、**`effectScope` 如何管理一批 effect 的批量销毁(Composition API 里为什么组件卸载能自动清理所有 watch)**,或者转向 **Vue3 diff 算法的双端比较 + 最长递增子序列具体怎么求解**
