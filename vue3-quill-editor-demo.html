@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vue3 + Quill 富文本编辑器 Demo</title>
+
+<!-- Quill 样式 -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+
+<style>
+  :root {
+    --accent: #4f46e5;
+    --bg: #f7f7fb;
+    --border: #e2e2ea;
+    --text: #1f2330;
+    --muted: #7a7f95;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #app {
+    max-width: 960px;
+    margin: 32px auto;
+    padding: 0 20px 60px;
+  }
+  header {
+    margin-bottom: 20px;
+  }
+  header h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  #editor {
+    min-height: 320px;
+    font-size: 15px;
+  }
+  .toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: #fafafd;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .toolbar-row .actions button {
+    margin-left: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .toolbar-row .actions button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .toolbar-row .actions button:hover {
+    opacity: 0.85;
+  }
+  .status {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 16px;
+  }
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 28px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  pre#htmlOutput {
+    background: #1e1e2a;
+    color: #d9d9e6;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <h1>Vue3 + Quill 富文本编辑器 Demo</h1>
+    <p>纯 CDN 引入，无需构建工具；内容会自动保存到浏览器 localStorage</p>
+  </header>
+
+  <div class="card">
+    <div id="editor"></div>
+    <div class="toolbar-row">
+      <span>字数：{{ charCount }}</span>
+      <div class="actions">
+        <button @click="clearContent">清空</button>
+        <button class="primary" @click="saveContent">保存</button>
+      </div>
+    </div>
+  </div>
+  <div class="status">{{ statusText }}</div>
+
+  <div class="panel-title">HTML 源码预览</div>
+  <pre id="htmlOutput">{{ htmlContent }}</pre>
+</div>
+
+<!-- Vue 3 -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<!-- Quill -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+createApp({
+  setup() {
+    const htmlContent = ref('');
+    const charCount = ref(0);
+    const statusText = ref('');
+    let quill = null;
+
+    const STORAGE_KEY = 'vue3-quill-demo-content';
+
+    const updateStats = () => {
+      const text = quill.getText();
+      charCount.value = text.replace(/\n/g, '').length;
+      htmlContent.value = quill.root.innerHTML;
+    };
+
+    const saveContent = () => {
+      localStorage.setItem(STORAGE_KEY, quill.root.innerHTML);
+      statusText.value = '已保存到本地 (' + new Date().toLocaleTimeString() + ')';
+    };
+
+    const clearContent = () => {
+      quill.setText('');
+      statusText.value = '内容已清空';
+    };
+
+    onMounted(() => {
+      quill = new Quill('#editor', {
+        theme: 'snow',
+        placeholder: '开始输入…支持标题、加粗、列表、链接、图片等',
+        modules: {
+          toolbar: [
+            [{ header: [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ color: [] }, { background: [] }],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ align: [] }],
+            ['blockquote', 'code-block'],
+            ['link', 'image'],
+            ['clean']
+          ]
+        }
+      });
+
+      // 恢复本地保存的内容
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        quill.root.innerHTML = saved;
+        statusText.value = '已恢复上次保存的内容';
+      }
+
+      updateStats();
+      quill.on('text-change', updateStats);
+    });
+
+    return { htmlContent, charCount, statusText, saveContent, clearContent };
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>
